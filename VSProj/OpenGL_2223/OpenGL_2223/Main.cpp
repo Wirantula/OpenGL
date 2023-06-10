@@ -10,7 +10,6 @@ void processInput(GLFWwindow* window);
 int init(GLFWwindow*& window);
 
 void createTriangle(GLuint &vao, int &size);
-void createSquare(GLuint& vao, int& size);
 void createShaders();
 void createProgram(GLuint& programID, const char* vertex, const char* fragment);
 
@@ -101,34 +100,6 @@ void createTriangle(GLuint& vao, int& size)
 		-0.5f, -0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
 		0.0f,  0.5f, 0.0f
-	};
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	GLuint VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	size = sizeof(vertices);
-}
-
-//create a square for exercise 1
-void createSquare(GLuint& vao, int& size)
-{
-	float vertices[] =
-	{
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f,  0.5f, 0.0f,
-		0.5f,  0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f
 	};
 
 	glGenVertexArrays(1, &vao);

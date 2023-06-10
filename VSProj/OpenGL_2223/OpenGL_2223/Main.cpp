@@ -5,11 +5,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+
 //forward decs
 void processInput(GLFWwindow* window);
 int init(GLFWwindow*& window);
 
-void createTriangle(GLuint &vao, int &size);
+void createTriangle(GLuint &vao, GLuint &EBO, int &size, int &numIndices);
 void createShaders();
 void createProgram(GLuint& programID, const char* vertex, const char* fragment);
 
@@ -26,8 +27,10 @@ int main()
 	if (res != 0) return res;
 
 	GLuint triangleVAO;
+	GLuint EBO;
 	int triangleSize;
-	createTriangle(triangleVAO, triangleSize);
+	int triangleIndexCount;
+	createTriangle(triangleVAO, EBO, triangleSize, triangleIndexCount);
 	//createSquare(triangleVAO, triangleSize);
 	createShaders();
 
@@ -47,7 +50,8 @@ int main()
 		glUseProgram(simpleProgram);
 
 		glBindVertexArray(triangleVAO);
-		glDrawArrays(GL_TRIANGLES, 0, triangleSize);
+		//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
+		glDrawElements(GL_TRIANGLES, triangleIndexCount, GL_UNSIGNED_INT, 0);
 
 		//swap&poll
 		glfwSwapBuffers(window);
@@ -93,18 +97,26 @@ int init(GLFWwindow*& window)
 	return 0;
 }
 
-void createTriangle(GLuint& vao, int& size)
+void createTriangle(GLuint& vao, GLuint& EBO, int& size, int&numIndices)
 {
 	float vertices[] =
 	{
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f,
-
-		-0.5f,  0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f
+		//position              //color
+		-1.0f, -1.0f, 0.0f,		1.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, -1.0f, 0.0f,		0.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f,  1.0f, 0.0f,		0.0f, 0.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f, 		1.0f, 1.0f, 1.0f, 1.0f
 	};
+	
+	int indices[] = 
+	{
+		0, 1, 2,
+		2, 1, 3
+	};
+
+	int stride = (3 + 4)* sizeof(float);
+	size = sizeof(vertices) / stride;
+	numIndices = sizeof(indices) / sizeof(int);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -112,13 +124,19 @@ void createTriangle(GLuint& vao, int& size)
 	GLuint VBO;
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
 	glEnableVertexAttribArray(0);
 
-	size = sizeof(vertices);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
 }
 
 void createShaders()

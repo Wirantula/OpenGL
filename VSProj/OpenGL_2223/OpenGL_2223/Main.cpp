@@ -5,14 +5,21 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 //forward decs
 void processInput(GLFWwindow* window);
 int init(GLFWwindow*& window);
 
-void createTriangle(GLuint &vao, GLuint &EBO, int &size, int &numIndices);
+void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices);
 void createShaders();
 void createProgram(GLuint& programID, const char* vertex, const char* fragment);
+GLuint loadTexture(const char* path);
 
 //util forward
 void loadFile(const char* filename, char*& output);
@@ -20,22 +27,48 @@ void loadFile(const char* filename, char*& output);
 //program IDs
 GLuint simpleProgram;
 
+const int WIDTH = 1280, HEIGHT = 720;
+
 int main()
 {
 	GLFWwindow* window;
 	int res = init(window);
 	if (res != 0) return res;
 
+	createShaders();
+	
 	GLuint triangleVAO;
 	GLuint EBO;
 	int triangleSize;
 	int triangleIndexCount;
-	createTriangle(triangleVAO, EBO, triangleSize, triangleIndexCount);
-	//createSquare(triangleVAO, triangleSize);
-	createShaders();
+	createGeometry(triangleVAO, EBO, triangleSize, triangleIndexCount);
+	
+	GLuint boxTex = loadTexture("textures/container2.png");
+	GLuint boxNormal = loadTexture("textures/container2normal.png");
+
+	//set texture channels
+	glUseProgram(simpleProgram);
+	glUniform1i(glGetUniformLocation(simpleProgram, "mainTex"), 0);
+	glUniform1i(glGetUniformLocation(simpleProgram, "normalTex"), 1);
 
 	//tell opengl to create viewport
-	glViewport(0, 0, 1280, 720);
+	glViewport(0, 0, WIDTH, HEIGHT);
+
+	glm::vec3 lightPosition = glm::vec3(0, 2.5f, 5.0f);
+	glm::vec3 cameraPosition = glm::vec3(0, 2.5f, -5.0f);
+
+
+	//matrices
+	glm::mat4 world = glm::mat4(1.0f);
+	world = glm::rotate(world, glm::radians(45.0f), glm::vec3(0,1,0));
+	world = glm::scale(world, glm::vec3(1,1,1));
+	world = glm::translate(world, glm::vec3(0,0,0));
+
+	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+	glm::mat4 projection = glm::perspective(glm::radians(25.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+
+
 
 	//rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -44,10 +77,23 @@ int main()
 		processInput(window);
 
 		// rendering
-		glClearColor(0.2f, 0.4f, 0.5f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(simpleProgram);
+
+		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "world"), 1, GL_FALSE, glm::value_ptr(world));
+		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		glUniform3fv(glGetUniformLocation(simpleProgram, "lightPosition"), 1, glm::value_ptr(lightPosition));
+		glUniform3fv(glGetUniformLocation(simpleProgram, "cameraPosition"), 1, glm::value_ptr(cameraPosition));
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, boxTex);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, boxNormal);
 
 		glBindVertexArray(triangleVAO);
 		//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
@@ -78,7 +124,7 @@ int init(GLFWwindow*& window)
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	//glfw window creation
-	window = glfwCreateWindow(1280, 720, "OpenGL_2223", NULL, NULL);
+	window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL_2223", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -97,24 +143,69 @@ int init(GLFWwindow*& window)
 	return 0;
 }
 
-void createTriangle(GLuint& vao, GLuint& EBO, int& size, int&numIndices)
+void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices)
 {
-	float vertices[] =
-	{
-		//position              //color
-		-1.0f, -1.0f, 0.0f,		1.0f, 0.0f, 0.0f, 1.0f,
-		1.0f, -1.0f, 0.0f,		0.0f, 1.0f, 0.0f, 1.0f,
-		-1.0f,  1.0f, 0.0f,		0.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f, 		1.0f, 1.0f, 1.0f, 1.0f
-	};
-	
-	int indices[] = 
-	{
-		0, 1, 2,
-		2, 1, 3
+	float vertices[] = {
+		// positions            //colors            // tex coords   // normals          //tangents      //bitangents
+		0.5f, -0.5f, -0.5f,     1.0f, 1.0f, 1.0f,   1.f, 1.f,       0.f, -1.f, 0.f,     -1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+		0.5f, -0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   1.f, 0.f,       0.f, -1.f, 0.f,     -1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+		-0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 1.0f,   0.f, 0.f,       0.f, -1.f, 0.f,     -1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+		-0.5f, -0.5f, -.5f,     1.0f, 1.0f, 1.0f,   0.f, 1.f,       0.f, -1.f, 0.f,     -1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+
+		0.5f, 0.5f, -0.5f,      1.0f, 1.0f, 1.0f,   1.f, 1.f,       1.f, 0.f, 0.f,     0.f, -1.f, 0.f,  0.f, 0.f, 1.f,
+		0.5f, 0.5f, 0.5f,       1.0f, 1.0f, 1.0f,   1.f, 0.f,       1.f, 0.f, 0.f,     0.f, -1.f, 0.f,  0.f, 0.f, 1.f,
+
+		0.5f, 0.5f, 0.5f,       1.0f, 1.0f, 1.0f,   1.f, 0.f,       0.f, 0.f, 1.f,     1.f, 0.f, 0.f,  0.f, -1.f, 0.f,
+		-0.5f, 0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   0.f, 0.f,       0.f, 0.f, 1.f,     1.f, 0.f, 0.f,  0.f, -1.f, 0.f,
+
+		-0.5f, 0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   0.f, 0.f,      -1.f, 0.f, 0.f,     0.f, 1.f, 0.f,  0.f, 0.f, 1.f,
+		-0.5f, 0.5f, -.5f,      1.0f, 1.0f, 1.0f,   0.f, 1.f,      -1.f, 0.f, 0.f,     0.f, 1.f, 0.f,  0.f, 0.f, 1.f,
+
+		-0.5f, 0.5f, -.5f,      1.0f, 1.0f, 1.0f,   0.f, 1.f,      0.f, 0.f, -1.f,     1.f, 0.f, 0.f,  0.f, 1.f, 0.f,
+		0.5f, 0.5f, -0.5f,      1.0f, 1.0f, 1.0f,   1.f, 1.f,      0.f, 0.f, -1.f,     1.f, 0.f, 0.f,  0.f, 1.f, 0.f,
+
+		-0.5f, 0.5f, -.5f,      1.0f, 1.0f, 1.0f,   1.f, 1.f,       0.f, 1.f, 0.f,     1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+		-0.5f, 0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   1.f, 0.f,       0.f, 1.f, 0.f,     1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+
+		0.5f, -0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   1.f, 1.f,       0.f, 0.f, 1.f,     1.f, 0.f, 0.f,  0.f, -1.f, 0.f,
+		-0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 1.0f,   0.f, 1.f,       0.f, 0.f, 1.f,     1.f, 0.f, 0.f,  0.f, -1.f, 0.f,
+
+		-0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 1.0f,   1.f, 0.f,       -1.f, 0.f, 0.f,     0.f, 1.f, 0.f,  0.f, 0.f, 1.f,
+		-0.5f, -0.5f, -.5f,     1.0f, 1.0f, 1.0f,   1.f, 1.f,       -1.f, 0.f, 0.f,     0.f, 1.f, 0.f,  0.f, 0.f, 1.f,
+
+		-0.5f, -0.5f, -.5f,     1.0f, 1.0f, 1.0f,   0.f, 0.f,       0.f, 0.f, -1.f,     1.f, 0.f, 0.f,  0.f, 1.f, 0.f,
+		0.5f, -0.5f, -0.5f,     1.0f, 1.0f, 1.0f,   1.f, 0.f,       0.f, 0.f, -1.f,     1.f, 0.f, 0.f,  0.f, 1.f, 0.f,
+
+		0.5f, -0.5f, -0.5f,     1.0f, 1.0f, 1.0f,   0.f, 1.f,       1.f, 0.f, 0.f,     0.f, -1.f, 0.f,  0.f, 0.f, 1.f,
+		0.5f, -0.5f, 0.5f,      1.0f, 1.0f, 1.0f,   0.f, 0.f,       1.f, 0.f, 0.f,     0.f, -1.f, 0.f,  0.f, 0.f, 1.f,
+
+		0.5f, 0.5f, -0.5f,      1.0f, 1.0f, 1.0f,   0.f, 1.f,       0.f, 1.f, 0.f,     1.f, 0.f, 0.f,  0.f, 0.f, 1.f,
+		0.5f, 0.5f, 0.5f,       1.0f, 1.0f, 1.0f,   0.f, 0.f,       0.f, 1.f, 0.f,     1.f, 0.f, 0.f,  0.f, 0.f, 1.f
 	};
 
-	int stride = (3 + 4)* sizeof(float);
+	int indices[] =
+	{
+			// DOWN
+			0, 1, 2,   // first triangle
+			0, 2, 3,    // second triangle
+			// BACK
+			14, 6, 7,   // first triangle
+			14, 7, 15,    // second triangle
+			// RIGHT
+			20, 4, 5,   // first triangle
+			20, 5, 21,    // second triangle
+			// LEFT
+			16, 8, 9,   // first triangle
+			16, 9, 17,    // second triangle
+			// FRONT
+			18, 10, 11,   // first triangle
+			18, 11, 19,    // second triangle
+			// UP
+			22, 12, 13,   // first triangle
+			22, 13, 23,    // second triangle
+	};
+
+	int stride = (3 + 3 + 2 + 3 + 3 + 3) * sizeof(float);
 	size = sizeof(vertices) / stride;
 	numIndices = sizeof(indices) / sizeof(int);
 
@@ -136,6 +227,18 @@ void createTriangle(GLuint& vao, GLuint& EBO, int& size, int&numIndices)
 
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(11 * sizeof(float)));
+	glEnableVertexAttribArray(4);
+
+	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, stride, (void*)(14 * sizeof(float)));
+	glEnableVertexAttribArray(5);
 
 }
 
@@ -207,7 +310,7 @@ void loadFile(const char* filename, char*& output)
 		int length = file.tellg();
 		file.seekg(0, file.beg); // seek to start of file
 
-		output = new char[length +1]; //allocate memory for the char pointer
+		output = new char[length + 1]; //allocate memory for the char pointer
 		file.read(output, length); // read data as a block
 		output[length] = '\0'; // add null teminator to end of char pointer
 
@@ -217,4 +320,35 @@ void loadFile(const char* filename, char*& output)
 	{
 		output = NULL; //if the file failed to open, set the char pointer to null
 	}
+}
+
+GLuint loadTexture(const char* path)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width, height, numChannels;
+	unsigned char* data = stbi_load(path, &width, &height, &numChannels, 0);
+	if (data)
+	{
+		if(numChannels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		else if(numChannels == 4)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Error loading texture: " << path << std::endl;
+	}
+
+	stbi_image_free(data);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	
+	return textureID;
 }

@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -22,6 +23,9 @@ void createProgram(GLuint& programID, const char* vertex, const char* fragment);
 GLuint loadTexture(const char* path);
 void renderSkyBox();
 
+//window callbacks
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
 //util forward
 void loadFile(const char* filename, char*& output);
 
@@ -32,7 +36,7 @@ const int WIDTH = 1280, HEIGHT = 720;
 
 //world data
 glm::vec3 lightDirection = glm::normalize(glm::vec3(-0.5f, -0.5f, -0.5f));
-glm::vec3 cameraPosition = glm::vec3(0, 2.5f, -5.0f);
+glm::vec3 cameraPosition = glm::vec3(0, 0, 0);
 GLuint skyboxVAO;
 GLuint skyboxEBO;
 int skyboxSize;
@@ -40,6 +44,9 @@ int skyboxIndexCount;
 glm::mat4 view;
 glm::mat4 projection;
 
+float lastX, lastY;
+bool firstMouse = true;
+float camYaw, camPitch;
 
 int main()
 {
@@ -64,13 +71,8 @@ int main()
 	glViewport(0, 0, WIDTH, HEIGHT);
 
 	//matrices
-
-
 	view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
-
-	projection = glm::perspective(glm::radians(25.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
-
-
+	projection = glm::perspective(glm::radians(60.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
 
 	//rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -114,7 +116,6 @@ void renderSkyBox()
 
 	//rendering
 	glBindVertexArray(skyboxVAO);
-	//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
 	glDrawElements(GL_TRIANGLES, skyboxIndexCount, GL_UNSIGNED_INT, 0);
 
 	//opengl closing
@@ -146,7 +147,7 @@ int init(GLFWwindow*& window)
 		return -1;
 	}
 	//register callbacks
-
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	glfwMakeContextCurrent(window);
 
@@ -158,6 +159,35 @@ int init(GLFWwindow*& window)
 	}
 
 	return 0;
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	float x = (float)xpos;
+	float y = (float)ypos;
+
+	if (firstMouse)
+	{
+		lastX = x;
+		lastY = y;
+		firstMouse = false;
+	}
+
+	float dx = x - lastX;
+	float dy = y - lastY;
+	lastX = x;
+	lastY = y;
+
+	camYaw -= dx;
+	camPitch = glm::clamp( camPitch + dy, -90.0f, 90.0f);
+	if(camYaw > 180.0f) camYaw -= 360.0f;
+	if(camYaw < -180.0f) camYaw += 360.0f;
+
+	glm::quat camQuat = glm::quat(glm::vec3(glm::radians(camPitch), glm::radians(camYaw), 0));
+
+	glm::vec3 camForward = camQuat * glm::vec3(0,0,1);
+	glm::vec3 camUp = camQuat * glm::vec3(0,1,0);
+	view = glm::lookAt(cameraPosition, cameraPosition + camForward, camUp);
 }
 
 void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices)

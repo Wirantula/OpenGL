@@ -43,30 +43,34 @@ int main()
 	int triangleIndexCount;
 	createGeometry(triangleVAO, EBO, triangleSize, triangleIndexCount);
 	
-	GLuint boxTex = loadTexture("textures/container2.png");
-	GLuint boxNormal = loadTexture("textures/container2normal.png");
+	GLuint boxTex = loadTexture("textures/Magma.png");
+	GLuint boxNormal = loadTexture("textures/MagmaNormal.png");
+	GLuint boxSpecular = loadTexture("textures/MagmaSpecular2.png");
+	GLuint boxDisplace = loadTexture("textures/MagmaDisplacement.png");
 
 	//set texture channels
 	glUseProgram(simpleProgram);
 	glUniform1i(glGetUniformLocation(simpleProgram, "mainTex"), 0);
 	glUniform1i(glGetUniformLocation(simpleProgram, "normalTex"), 1);
+	glUniform1i(glGetUniformLocation(simpleProgram, "specularTex"), 2);
+	glUniform1i(glGetUniformLocation(simpleProgram, "displaceTex"), 3);
 
 	//tell opengl to create viewport
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	glm::vec3 lightPosition = glm::vec3(0, 2.5f, 5.0f);
-	glm::vec3 cameraPosition = glm::vec3(0, 2.5f, -5.0f);
+	glm::vec3 lightPosition = glm::vec3(0.0f, 3.0f, 5.0f);
+	glm::vec3 cameraPosition = glm::vec3(0.0f, 3.0f, -5.0f);
 
 
 	//matrices
 	glm::mat4 world = glm::mat4(1.0f);
-	world = glm::rotate(world, glm::radians(45.0f), glm::vec3(0,1,0));
+	world = glm::rotate(world, glm::radians(45.0f), glm::vec3(0.1f,1,0));
 	world = glm::scale(world, glm::vec3(1,1,1));
 	world = glm::translate(world, glm::vec3(0,0,0));
 
-	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
+	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0,0.3f,0), glm::vec3(0,1,0));
 
-	glm::mat4 projection = glm::perspective(glm::radians(25.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(10.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
 
 
 
@@ -95,9 +99,18 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, boxNormal);
 
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, boxSpecular);
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, boxDisplace);
+
 		glBindVertexArray(triangleVAO);
 		//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
 		glDrawElements(GL_TRIANGLES, triangleIndexCount, GL_UNSIGNED_INT, 0);
+
+		float shaderTime = (float)glfwGetTime();
+		glUniform1f(glGetUniformLocation(simpleProgram, "u_time"), shaderTime);
 
 		//swap&poll
 		glfwSwapBuffers(window);

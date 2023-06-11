@@ -20,14 +20,26 @@ void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices);
 void createShaders();
 void createProgram(GLuint& programID, const char* vertex, const char* fragment);
 GLuint loadTexture(const char* path);
+void renderSkyBox();
 
 //util forward
 void loadFile(const char* filename, char*& output);
 
 //program IDs
-GLuint simpleProgram;
+GLuint simpleProgram, skyProgram;
 
 const int WIDTH = 1280, HEIGHT = 720;
+
+//world data
+glm::vec3 lightDirection = glm::normalize(glm::vec3(-0.5f, -0.5f, -0.5f));
+glm::vec3 cameraPosition = glm::vec3(0, 2.5f, -5.0f);
+GLuint skyboxVAO;
+GLuint skyboxEBO;
+int skyboxSize;
+int skyboxIndexCount;
+glm::mat4 view;
+glm::mat4 projection;
+
 
 int main()
 {
@@ -37,11 +49,8 @@ int main()
 
 	createShaders();
 	
-	GLuint triangleVAO;
-	GLuint EBO;
-	int triangleSize;
-	int triangleIndexCount;
-	createGeometry(triangleVAO, EBO, triangleSize, triangleIndexCount);
+	
+	createGeometry(skyboxVAO, skyboxEBO, skyboxSize, skyboxIndexCount);
 	
 	GLuint boxTex = loadTexture("textures/container2.png");
 	GLuint boxNormal = loadTexture("textures/container2normal.png");
@@ -54,19 +63,12 @@ int main()
 	//tell opengl to create viewport
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	glm::vec3 lightPosition = glm::vec3(0, 2.5f, 5.0f);
-	glm::vec3 cameraPosition = glm::vec3(0, 2.5f, -5.0f);
-
-
 	//matrices
-	glm::mat4 world = glm::mat4(1.0f);
-	world = glm::rotate(world, glm::radians(45.0f), glm::vec3(0,1,0));
-	world = glm::scale(world, glm::vec3(1,1,1));
-	world = glm::translate(world, glm::vec3(0,0,0));
 
-	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
 
-	glm::mat4 projection = glm::perspective(glm::radians(25.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+	view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+	projection = glm::perspective(glm::radians(25.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
 
 
 
@@ -80,24 +82,7 @@ int main()
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(simpleProgram);
-
-		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "world"), 1, GL_FALSE, glm::value_ptr(world));
-		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(simpleProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-		glUniform3fv(glGetUniformLocation(simpleProgram, "lightPosition"), 1, glm::value_ptr(lightPosition));
-		glUniform3fv(glGetUniformLocation(simpleProgram, "cameraPosition"), 1, glm::value_ptr(cameraPosition));
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, boxTex);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, boxNormal);
-
-		glBindVertexArray(triangleVAO);
-		//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
-		glDrawElements(GL_TRIANGLES, triangleIndexCount, GL_UNSIGNED_INT, 0);
+		renderSkyBox();
 
 		//swap&poll
 		glfwSwapBuffers(window);
@@ -106,6 +91,35 @@ int main()
 
 	glfwTerminate();
 	return 0;
+}
+
+void renderSkyBox()
+{
+	//opengl setup
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+
+	glUseProgram(skyProgram);
+
+	glm::mat4 world = glm::mat4(1.0f);
+	world = glm::translate(world, cameraPosition);
+	world = glm::scale(world, glm::vec3(10, 10, 10));
+
+	glUniformMatrix4fv(glGetUniformLocation(skyProgram, "world"), 1, GL_FALSE, glm::value_ptr(world));
+	glUniformMatrix4fv(glGetUniformLocation(skyProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(skyProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	glUniform3fv(glGetUniformLocation(skyProgram, "lightDirection"), 1, glm::value_ptr(lightDirection));
+	glUniform3fv(glGetUniformLocation(skyProgram, "cameraPosition"), 1, glm::value_ptr(cameraPosition));
+
+	//rendering
+	glBindVertexArray(skyboxVAO);
+	//glDrawArrays(GL_TRIANGLES, 0, triangleSize);
+	glDrawElements(GL_TRIANGLES, skyboxIndexCount, GL_UNSIGNED_INT, 0);
+
+	//opengl closing
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void processInput(GLFWwindow* window)
@@ -131,6 +145,9 @@ int init(GLFWwindow*& window)
 		glfwTerminate();
 		return -1;
 	}
+	//register callbacks
+
+
 	glfwMakeContextCurrent(window);
 
 	//load glad
@@ -245,6 +262,7 @@ void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices)
 void createShaders()
 {
 	createProgram(simpleProgram, "Shaders/simpleVertex.shader", "Shaders/simpleFragment.shader");
+	createProgram(skyProgram, "Shaders/skyVertex.shader", "Shaders/skyFragment.shader");
 }
 
 void createProgram(GLuint& programID, const char* vertex, const char* fragment)

@@ -70,7 +70,7 @@ int main()
 
 	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0,0.3f,0), glm::vec3(0,1,0));
 
-	glm::mat4 projection = glm::perspective(glm::radians(10.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(35.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
 
 
 

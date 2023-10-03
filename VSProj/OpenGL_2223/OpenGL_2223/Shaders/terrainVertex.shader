@@ -9,9 +9,19 @@ out vec3 worldPosition;
 
 uniform mat4 world, view, projection;
 
+uniform sampler2D mainTex;
+
 void main()
 {
-	gl_Position = projection * view * world * vec4(aPos, 1.0);
+	vec3 pos = aPos;
+	//object space offset
+
+
+	vec4 worldPos = world * vec4(pos, 1.0);
+	//world space offset
+	worldPos.y += texture(mainTex, vUV).r * 100.0f;
+
+	gl_Position = projection * view * worldPos;
 	uv = vUV;
 	normal = vNormal;
 

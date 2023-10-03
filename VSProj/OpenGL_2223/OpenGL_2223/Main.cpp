@@ -26,6 +26,9 @@ unsigned int GeneratePlane(const char* heightmap, GLenum format, int comp, float
 
 //window callbacks
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+bool keys[1024];
 
 //util forward
 void loadFile(const char* filename, char*& output);
@@ -37,7 +40,7 @@ const int WIDTH = 1280, HEIGHT = 720;
 
 //world data
 glm::vec3 lightDirection = glm::normalize(glm::vec3(-0.5f, -0.5f, -0.5f));
-glm::vec3 cameraPosition = glm::vec3(0, 0, 0);
+glm::vec3 cameraPosition = glm::vec3(100.0f, 125.5f, 100.0f);
 GLuint skyboxVAO;
 GLuint skyboxEBO;
 int skyboxSize;
@@ -48,6 +51,7 @@ glm::mat4 projection;
 float lastX, lastY;
 bool firstMouse = true;
 float camYaw, camPitch;
+glm::quat camQuat = glm::quat(glm::vec3(glm::radians(camPitch), glm::radians(camYaw), 0));
 
 //terrain data
 GLuint terrainVAO, terrainIndexCount, heightmapID;
@@ -76,7 +80,7 @@ int main()
 
 	//matrices
 	view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
-	projection = glm::perspective(glm::radians(60.0f), WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(60.0f), WIDTH/(float)HEIGHT, 0.1f, 5000.0f);
 
 	//rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -86,7 +90,7 @@ int main()
 
 		// rendering
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderSkyBox();
 		renderTerrain();
@@ -105,6 +109,7 @@ void renderSkyBox()
 	//opengl setup
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH);
+	glDisable(GL_DEPTH_TEST);
 
 	glUseProgram(skyProgram);
 
@@ -131,6 +136,7 @@ void renderSkyBox()
 void renderTerrain()
 {
 	glEnable(GL_DEPTH);
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -259,6 +265,36 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	bool camChanged = false;
+
+	if (keys[GLFW_KEY_W])
+	{
+		cameraPosition += camQuat * glm::vec3(0,0,1);
+		camChanged = true;
+	}
+	if (keys[GLFW_KEY_S])
+	{
+		cameraPosition += camQuat * glm::vec3(0, 0, -1);
+		camChanged = true;
+	}
+	if (keys[GLFW_KEY_A])
+	{
+		cameraPosition += camQuat * glm::vec3(1, 0, 0);
+		camChanged = true;
+	}
+	if (keys[GLFW_KEY_D])
+	{
+		cameraPosition += camQuat * glm::vec3(-1, 0, 0);
+		camChanged = true;
+	}
+
+	if(camChanged)
+	{ 
+		glm::vec3 camForward = camQuat * glm::vec3(0, 0, 1);
+		glm::vec3 camUp = camQuat * glm::vec3(0, 1, 0);
+		view = glm::lookAt(cameraPosition, cameraPosition + camForward, camUp);
+	}
 }
 
 int init(GLFWwindow*& window)
@@ -280,7 +316,7 @@ int init(GLFWwindow*& window)
 	}
 	//register callbacks
 	glfwSetCursorPosCallback(window, mouse_callback);
-
+	glfwSetKeyCallback(window, key_callback);
 	glfwMakeContextCurrent(window);
 
 	//load glad
@@ -315,11 +351,25 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	if(camYaw > 180.0f) camYaw -= 360.0f;
 	if(camYaw < -180.0f) camYaw += 360.0f;
 
-	glm::quat camQuat = glm::quat(glm::vec3(glm::radians(camPitch), glm::radians(camYaw), 0));
+	camQuat = glm::quat(glm::vec3(glm::radians(camPitch), glm::radians(camYaw), 0));
 
 	glm::vec3 camForward = camQuat * glm::vec3(0,0,1);
 	glm::vec3 camUp = camQuat * glm::vec3(0,1,0);
 	view = glm::lookAt(cameraPosition, cameraPosition + camForward, camUp);
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (action == GLFW_PRESS)
+	{
+		//store key is pressed
+		keys[key] = true;
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		//store key is not pressed
+		keys[key] = false;
+	}
 }
 
 void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices)

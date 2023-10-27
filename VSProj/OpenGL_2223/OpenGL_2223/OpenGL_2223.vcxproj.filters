@@ -26,27 +26,48 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\simpleVertex.shader">
+    <None Include="resources\Shaders\starBox.fs">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\simpleFragment.shader">
+    <None Include="resources\Shaders\model.fs">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\skyFragment.shader">
+    <None Include="resources\Shaders\model.vs">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\skyVertex.shader">
+    <None Include="resources\Shaders\simpleFragment.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\terrainFragment.shader">
+    <None Include="resources\Shaders\simpleVertex.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\terrainVertex.shader">
+    <None Include="resources\Shaders\skyFragment.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\skyVertex.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\terrainFragment.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\terrainVertex.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\planet.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\moon.fs">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

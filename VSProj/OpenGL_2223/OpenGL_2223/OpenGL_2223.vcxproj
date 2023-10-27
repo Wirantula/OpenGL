@@ -95,6 +95,9 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(ProjectName)\resources" "$(TargetDir)resources\" /E /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -111,6 +114,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(ProjectName)\resources" "$(TargetDir)resources\" /E /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -125,6 +131,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(ProjectName)\resources" "$(TargetDir)resources\" /E /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -143,20 +152,30 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(ProjectName)\resources" "$(TargetDir)resources\" /E /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\simpleFragment.shader" />
-    <None Include="Shaders\simpleVertex.shader" />
-    <None Include="Shaders\skyFragment.shader" />
-    <None Include="Shaders\skyVertex.shader" />
-    <None Include="Shaders\terrainFragment.shader" />
-    <None Include="Shaders\terrainVertex.shader" />
+    <None Include="resources\Shaders\model.fs" />
+    <None Include="resources\Shaders\model.vs" />
+    <None Include="resources\Shaders\moon.fs" />
+    <None Include="resources\Shaders\planet.fs" />
+    <None Include="resources\Shaders\simpleFragment.shader" />
+    <None Include="resources\Shaders\simpleVertex.shader" />
+    <None Include="resources\Shaders\skyFragment.shader" />
+    <None Include="resources\Shaders\skyVertex.shader" />
+    <None Include="resources\Shaders\starBox.fs" />
+    <None Include="resources\Shaders\terrainFragment.shader" />
+    <None Include="resources\Shaders\terrainVertex.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mesh.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

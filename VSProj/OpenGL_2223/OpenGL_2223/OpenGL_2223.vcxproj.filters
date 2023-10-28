@@ -59,6 +59,30 @@
     <None Include="resources\Shaders\moon.fs">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="resources\Shaders\myFragmentShader.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\myVertexShader.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\fragImage.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\vertImage.vs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\fragImagechrabb.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\fragImageGammaCor.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\fragImagebloom.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\Shaders\fragImageblur.fs">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">

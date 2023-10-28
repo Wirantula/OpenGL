@@ -161,9 +161,16 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\Shaders\fragImage.fs" />
+    <None Include="resources\Shaders\fragImagebloom.fs" />
+    <None Include="resources\Shaders\fragImageblur.fs" />
+    <None Include="resources\Shaders\fragImagechrabb.fs" />
+    <None Include="resources\Shaders\fragImageGammaCor.fs" />
     <None Include="resources\Shaders\model.fs" />
     <None Include="resources\Shaders\model.vs" />
     <None Include="resources\Shaders\moon.fs" />
+    <None Include="resources\Shaders\myFragmentShader.fs" />
+    <None Include="resources\Shaders\myVertexShader.vs" />
     <None Include="resources\Shaders\planet.fs" />
     <None Include="resources\Shaders\simpleFragment.shader" />
     <None Include="resources\Shaders\simpleVertex.shader" />
@@ -172,6 +179,7 @@
     <None Include="resources\Shaders\starBox.fs" />
     <None Include="resources\Shaders\terrainFragment.shader" />
     <None Include="resources\Shaders\terrainVertex.shader" />
+    <None Include="resources\Shaders\vertImage.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mesh.h" />

@@ -30,11 +30,8 @@ void renderTerrain();
 void renderModel(Model* model, glm::vec3 pos, glm::vec3 rot, glm::vec3 scale);
 void renderPlanet();
 void renderMoon(glm::mat4 parentPosition);
-void createFrameBuffer(int width, int height, unsigned int& frameBufferID, unsigned int& colorBufferID, unsigned int& depthBufferID);
-void renderToBuffer(unsigned int frameBufferTo, unsigned int colorBufferFrom, unsigned int shader);
-void renderQuad();
 
-unsigned int GeneratePlane(const char* heightmap, unsigned char*& data, GLenum format, int comp, float hScale, float xzScale, unsigned int& indexCount, unsigned int& heightmapID);
+unsigned int GeneratePlane(const char* heightmap, unsigned char* &data, GLenum format, int comp, float hScale, float xzScale, unsigned int& indexCount, unsigned int& heightmapID);
 
 //window callbacks
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -46,9 +43,9 @@ bool keys[1024];
 void loadFile(const char* filename, char*& output);
 
 //program IDs
-GLuint simpleProgram, skyProgram, terrainProgram, modelProgram, starProgram, planetProgram, moonProgram, blitProgram, chrabbProgram, gamcorProgram, blurVerticalProgram, blurHorizontalProgram, bloomProgram;
+GLuint simpleProgram, skyProgram, terrainProgram, modelProgram, starProgram, planetProgram, moonProgram;
 
-const int WIDTH = 1920, HEIGHT = 1080;
+const int WIDTH = 1280, HEIGHT = 720;
 
 //world data
 glm::vec3 lightDirection = glm::normalize(glm::vec3(1.0f, 0, 0));
@@ -71,12 +68,11 @@ unsigned char* heightmapTexture;
 
 GLuint dirt, sand, grass, rock, snow, cubeMap, day, night, clouds, moon;
 
-Model* backpack, * sphere;
+Model *backpack, *sphere;
 Model* arm;
 Model* head;
 Model* skull;
 Model* alien;
-unsigned int vertImg, fragImg;
 
 int main()
 {
@@ -87,21 +83,21 @@ int main()
 	createShaders();
 	createGeometry(skyboxVAO, skyboxEBO, skyboxSize, skyboxIndexCount);
 
-	terrainVAO = GeneratePlane("resources/textures/heightmap.png", heightmapTexture, GL_RGBA, 4, 250.0f, 5.0f, terrainIndexCount, heightmapID);
-	heightNormalID = loadTexture("resources/textures/NormalMap.png");
+	//terrainVAO = GeneratePlane("resources/textures/heightmap.png", heightmapTexture, GL_RGBA, 4, 250.0f, 5.0f, terrainIndexCount, heightmapID);
+	//heightNormalID = loadTexture("resources/textures/NormalMap.png");
+	
+	//GLuint boxTex = loadTexture("resources/textures/container2.png");
+	//GLuint boxNormal = loadTexture("resources/textures/container2normal.png");
 
-	GLuint boxTex = loadTexture("resources/textures/container2.png");
-	GLuint boxNormal = loadTexture("resources/textures/container2normal.png");
-
-	dirt = loadTexture("resources/textures/dirt.jpg");
-	sand = loadTexture("resources/textures/sand.jpg");
-	grass = loadTexture("resources/textures/grass.png", 4);
-	rock = loadTexture("resources/textures/rock.jpg");
-	snow = loadTexture("resources/textures/snow.jpg");
+	//dirt = loadTexture("resources/textures/dirt.jpg");
+	//sand = loadTexture("resources/textures/sand.jpg");
+	//grass = loadTexture("resources/textures/grass.png", 4);
+	//rock = loadTexture("resources/textures/rock.jpg");
+	//snow = loadTexture("resources/textures/snow.jpg");
 
 	day = loadTexture("resources/textures/day.jpg");
 	night = loadTexture("resources/textures/night.jpg");
-	clouds = loadTexture("resources/textures/clouds.jpg", 0, GL_REPEAT, GL_CLAMP_TO_EDGE);
+	clouds = loadTexture("resources/textures/clouds.jpg",0 ,GL_REPEAT, GL_CLAMP_TO_EDGE);
 	moon = loadTexture("resources/textures/2k_moon.jpg");
 
 	std::vector<string> fileNames =
@@ -119,7 +115,7 @@ int main()
 	//arm = new Model("resources/Models/arm/arm.obj");
 	//head = new Model("resources/Models/head/head.obj");
 	//skull = new Model("resources/Models/skull/skull.obj");
-	alien = new Model("resources/Models/alien/alien.obj");
+	//alien = new Model("resources/Models/alien/alien.obj");
 
 	stbi_set_flip_vertically_on_load(true);
 	sphere = new Model("resources/Models/uv_sphere.obj");
@@ -129,20 +125,9 @@ int main()
 	//tell opengl to create viewport
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	unsigned int frameBuf1, frameBuf2;
-	unsigned int colorBuf1, colorBuf2;
-	unsigned int depthBuf1, depthBuf2;
-
-	createFrameBuffer(WIDTH, HEIGHT, frameBuf1, colorBuf1, depthBuf1);
-	createFrameBuffer(WIDTH, HEIGHT, frameBuf2, colorBuf2, depthBuf2);
-
 	//matrices
-	view = glm::lookAt(cameraPosition, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	projection = glm::perspective(glm::radians(60.0f), WIDTH / (float)HEIGHT, 1.0f, 10000.0f);
-
-	//OPENGL SETTINGS
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
+	view = glm::lookAt(cameraPosition, glm::vec3(0,0,0), glm::vec3(0,1,0));
+	projection = glm::perspective(glm::radians(60.0f), WIDTH/(float)HEIGHT, 1.0f, 10000.0f);
 
 	//rendering loop
 	while (!glfwWindowShouldClose(window))
@@ -150,31 +135,22 @@ int main()
 		//input
 		processInput(window);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, frameBuf1);
+		// rendering
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// rendering
 		//renderSkyBox();
 		renderStarBox();
 		renderPlanet();
 		//renderTerrain();
 
-		float t = glfwGetTime();
+		//float t = glfwGetTime();
 
 		//renderModel(backpack, glm::vec3(1000,100,1000), glm::vec3(0,t,0), glm::vec3(100,100,100));
 		//renderModel(arm, glm::vec3(100, 100, 1000), glm::vec3(0, t, 0), glm::vec3(5, 5, 5));
 		//renderModel(head, glm::vec3(1000, 100, 100), glm::vec3(-90, t, 0), glm::vec3(100, 100, 100));
 		//renderModel(skull, glm::vec3(1300, 100, 1300), glm::vec3(0, t, 0), glm::vec3(100, 100, 100));
-		renderModel(alien, glm::vec3(100, 100, 100), glm::vec3(0, t, 0), glm::vec3(10, 10, 10));
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		//POST PROCESSING
-		//renderToBuffer(frameBuf2, colorBuf1, chrabbProgram);
-		renderToBuffer(frameBuf2, colorBuf1, gamcorProgram);
-		renderToBuffer(frameBuf1, colorBuf2, blurVerticalProgram);
-		//renderToBuffer(frameBuf2, colorBuf1, blurHorizontalProgram);
-		//renderToBuffer(frameBuf2, colorBuf1, bloomProgram);
-		renderToBuffer(0, colorBuf2, blitProgram);
+		//renderModel(alien, glm::vec3(100, 100, 100), glm::vec3(0, t, 0), glm::vec3(10, 10, 10));
 
 		//swap&poll
 		glfwSwapBuffers(window);
@@ -291,7 +267,7 @@ void renderTerrain()
 
 }
 
-unsigned int GeneratePlane(const char* heightmap, unsigned char*& data, GLenum format, int comp, float hScale, float xzScale, unsigned int& indexCount, unsigned int& heightmapID) {
+unsigned int GeneratePlane(const char* heightmap, unsigned char* &data, GLenum format, int comp, float hScale, float xzScale, unsigned int& indexCount, unsigned int& heightmapID) {
 	int width, height, channels;
 	data = nullptr;
 	if (heightmap != nullptr) {
@@ -323,7 +299,7 @@ unsigned int GeneratePlane(const char* heightmap, unsigned char*& data, GLenum f
 
 		// TODO: set position
 		vertices[index++] = x * xzScale;
-		vertices[index++] = (texHeight / 255.0f) * hScale;
+		vertices[index++] = (texHeight/255.0f) * hScale;
 		vertices[index++] = z * xzScale;
 
 		// TODO: set normal
@@ -403,7 +379,7 @@ void processInput(GLFWwindow* window)
 
 	if (keys[GLFW_KEY_W])
 	{
-		cameraPosition += camQuat * glm::vec3(0, 0, 1);
+		cameraPosition += camQuat * glm::vec3(0,0,1);
 		camChanged = true;
 	}
 	if (keys[GLFW_KEY_S])
@@ -422,8 +398,8 @@ void processInput(GLFWwindow* window)
 		camChanged = true;
 	}
 
-	if (camChanged)
-	{
+	if(camChanged)
+	{ 
 		glm::vec3 camForward = camQuat * glm::vec3(0, 0, 1);
 		glm::vec3 camUp = camQuat * glm::vec3(0, 1, 0);
 		view = glm::lookAt(cameraPosition, cameraPosition + camForward, camUp);
@@ -480,14 +456,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastY = y;
 
 	camYaw -= dx;
-	camPitch = glm::clamp(camPitch + dy, -90.0f, 90.0f);
-	if (camYaw > 180.0f) camYaw -= 360.0f;
-	if (camYaw < -180.0f) camYaw += 360.0f;
+	camPitch = glm::clamp( camPitch + dy, -90.0f, 90.0f);
+	if(camYaw > 180.0f) camYaw -= 360.0f;
+	if(camYaw < -180.0f) camYaw += 360.0f;
 
 	camQuat = glm::quat(glm::vec3(glm::radians(camPitch), glm::radians(camYaw), 0));
 
-	glm::vec3 camForward = camQuat * glm::vec3(0, 0, 1);
-	glm::vec3 camUp = camQuat * glm::vec3(0, 1, 0);
+	glm::vec3 camForward = camQuat * glm::vec3(0,0,1);
+	glm::vec3 camUp = camQuat * glm::vec3(0,1,0);
 	view = glm::lookAt(cameraPosition, cameraPosition + camForward, camUp);
 }
 
@@ -547,24 +523,24 @@ void createGeometry(GLuint& vao, GLuint& EBO, int& size, int& numIndices)
 
 	int indices[] =
 	{
-		// DOWN
-		0, 1, 2,   // first triangle
-		0, 2, 3,    // second triangle
-		// BACK
-		14, 6, 7,   // first triangle
-		14, 7, 15,    // second triangle
-		// RIGHT
-		20, 4, 5,   // first triangle
-		20, 5, 21,    // second triangle
-		// LEFT
-		16, 8, 9,   // first triangle
-		16, 9, 17,    // second triangle
-		// FRONT
-		18, 10, 11,   // first triangle
-		18, 11, 19,    // second triangle
-		// UP
-		22, 12, 13,   // first triangle
-		22, 13, 23,    // second triangle
+			// DOWN
+			0, 1, 2,   // first triangle
+			0, 2, 3,    // second triangle
+			// BACK
+			14, 6, 7,   // first triangle
+			14, 7, 15,    // second triangle
+			// RIGHT
+			20, 4, 5,   // first triangle
+			20, 5, 21,    // second triangle
+			// LEFT
+			16, 8, 9,   // first triangle
+			16, 9, 17,    // second triangle
+			// FRONT
+			18, 10, 11,   // first triangle
+			18, 11, 19,    // second triangle
+			// UP
+			22, 12, 13,   // first triangle
+			22, 13, 23,    // second triangle
 	};
 
 	int stride = (3 + 3 + 2 + 3 + 3 + 3) * sizeof(float);
@@ -652,15 +628,6 @@ void createShaders()
 
 	createProgram(moonProgram, "resources/Shaders/model.vs", "resources/Shaders/moon.fs");
 
-
-	///post processing///
-	createProgram(blitProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImage.fs");
-	createProgram(chrabbProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImagechrabb.fs");
-	createProgram(gamcorProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImageGammaCor.fs");
-	createProgram(blurVerticalProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImageblur.fs");
-	//createProgram(blurHorizontalProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImageblur.fs");
-	//glUniform1i(glGetUniformLocation(blurHorizontalProgram, "horizontal"), true);
-	//createProgram(bloomProgram, "resources/Shaders/vertImage.vs", "resources/Shaders/fragImagebloom.fs");
 }
 
 void createProgram(GLuint& programID, const char* vertex, const char* fragment)
@@ -753,10 +720,10 @@ GLuint loadTexture(const char* path, int comp, GLint wrapTypeS, GLint wrapTypeT)
 	unsigned char* data = stbi_load(path, &width, &height, &numChannels, comp);
 	if (data)
 	{
-		if (comp != 0) numChannels = comp;
-		if (numChannels == 3)
+		if(comp != 0) numChannels = comp;
+		if(numChannels == 3)
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		else if (numChannels == 4)
+		else if(numChannels == 4)
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
@@ -768,7 +735,7 @@ GLuint loadTexture(const char* path, int comp, GLint wrapTypeS, GLint wrapTypeT)
 	stbi_image_free(data);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-
+	
 	return textureID;
 }
 
@@ -855,9 +822,9 @@ void renderPlanet()
 	glUseProgram(planetProgram);
 
 	glm::mat4 world = glm::mat4(1.0f);
-	world = glm::translate(world, glm::vec3(0, 0, 0));
-	world = glm::scale(world, glm::vec3(100, 100, 100));
-	world = glm::rotate(world, glm::radians(23.0f), glm::vec3(1, 0, 0));
+	world = glm::translate(world, glm::vec3(0,0,0));
+	world = glm::scale(world, glm::vec3(100,100,100));
+	world = glm::rotate(world, glm::radians(23.0f), glm::vec3(1,0,0));
 	world = glm::rotate(world, glm::radians((float)glfwGetTime()), glm::vec3(0, 1, 0));
 
 	glUniformMatrix4fv(glGetUniformLocation(planetProgram, "world"), 1, GL_FALSE, glm::value_ptr(world));
@@ -896,8 +863,8 @@ void renderMoon(glm::mat4 parentPosition)
 
 	glm::mat4 world = glm::mat4(1.0f);
 	world = parentPosition;
-	world = glm::rotate(world, glm::radians(5.0f), glm::vec3(1, 0, 0));
-	world = glm::rotate(world, glm::radians((float)glfwGetTime() * (48 / 60.0f)), glm::vec3(0, 1, 0));
+	world = glm::rotate(world, glm::radians(5.0f), glm::vec3(1,0,0));
+	world = glm::rotate(world, glm::radians((float)glfwGetTime() * (48/ 60.0f)), glm::vec3(0, 1, 0));
 	world = glm::translate(world, glm::vec3(0, 0, 6033));
 	world = glm::scale(world, glm::vec3(25, 25, 25));
 
@@ -912,79 +879,4 @@ void renderMoon(glm::mat4 parentPosition)
 	glBindTexture(GL_TEXTURE_2D, moon);
 
 	sphere->Draw(moonProgram);
-}
-
-void createFrameBuffer(int width, int height, unsigned int& frameBufferID, unsigned int& colorBufferID, unsigned int& depthBufferID)
-{
-	//gen frame buffer
-	glGenFramebuffers(1, &frameBufferID);
-
-	//gen color buffer
-	glGenTextures(1, &colorBufferID);
-	glBindTexture(GL_TEXTURE_2D, colorBufferID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-
-	//gen depth buffer
-	glGenRenderbuffers(1, &depthBufferID);
-	glBindRenderbuffer(GL_RENDERBUFFER, depthBufferID);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-
-	//attach buffers
-	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferID, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferID);
-
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE ) {std::cout << "Framebuffer not complete!" << std::endl;}
-
-	//unbind framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void renderToBuffer(unsigned int frameBufferTo, unsigned int colorBufferFrom, unsigned int shader)
-{
-	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferTo);
-
-	glUseProgram(shader);
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, colorBufferFrom);
-
-	//render something
-	renderQuad();
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-	if (quadVAO == 0)
-	{
-		float quadVertices[] = {
-			-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-			1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-			1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		};
-		//setup plane VAO
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	}
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
 }
